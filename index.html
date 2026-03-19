@@ -1,282 +1,1367 @@
-<!-- Chosen Palette: Slate & Blue Tech (Profissional, Limpo e Moderno) -->
-<!-- Application Structure Plan: 
-    1. Hero Section: Apresentação imediata com nome, cargo e links de contacto.
-    2. Dashboard de Competências: Utilização de um gráfico Radar (Chart.js) para mostrar o equilíbrio entre Infraestrutura (atual) e Desenvolvimento (objetivo futuro).
-    3. Experiência Interactiva: Linha do tempo expansível onde o utilizador clica para ler as conquistas em cada empresa.
-    4. Hub de Conhecimento: Filtros dinâmicos para alternar entre competências técnicas, formação académica e certificações.
-    5. Footer: Encerramento com redes sociais.
-    Porquê esta estrutura? Transforma dados estáticos em informação visual rápida, permitindo que recrutadores foquem no que mais lhes interessa (ex: apenas competências técnicas ou apenas histórico profissional).
--->
-<!-- Visualization & Content Choices:
-    - Radar Chart (Chart.js): Para comparar Infra vs. Dev vs. Dados.
-    - Timeline (HTML/JS): Para organizar a experiência cronologicamente com interatividade de clique.
-    - Grid de Filtros (JS): Para gerir a visualização de múltiplos cursos e competências sem sobrecarregar a página.
-    - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
--->
-
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>João Gabriel | Portfólio de TI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
-        .chart-container { position: relative; width: 100%; max-width: 500px; height: 350px; margin: 0 auto; }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
-        .timeline-item::before { content: ''; position: absolute; left: 24px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
-        .fade-in { animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>João Gabriel — Portfólio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #ffffff0f;
+    --border-accent: #ffffff1a;
+    --text: #e8e8f0;
+    --text-muted: #6b6b82;
+    --text-dim: #3a3a52;
+    --accent: #4fffb0;
+    --accent2: #7b61ff;
+    --accent3: #ff6b6b;
+    --accent-glow: #4fffb044;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* GRID BACKGROUND */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 20px 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(to bottom, var(--bg) 0%, transparent 100%);
+    backdrop-filter: blur(0px);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--accent); }
+
+  .nav-cta {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent) !important;
+    border: 1px solid var(--accent);
+    padding: 8px 20px;
+    border-radius: 2px;
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background 0.2s, color 0.2s !important;
+  }
+
+  .nav-cta:hover {
+    background: var(--accent) !important;
+    color: var(--bg) !important;
+  }
+
+  /* HAMBURGER */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 4px;
+  }
+  .hamburger span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text);
+    transition: all 0.3s;
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* HERO */
+  #hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 120px 48px 80px;
+    gap: 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .hero-name {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 800;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    margin-bottom: 28px;
+  }
+
+  .hero-name .line { display: block; }
+  .hero-name .line-accent { color: var(--accent); }
+
+  .hero-bio {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 480px;
+    line-height: 1.8;
+    margin-bottom: 40px;
+  }
+
+  .hero-bio strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: var(--accent);
+    border: none;
+    padding: 14px 32px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px var(--accent-glow);
+  }
+
+  .btn-outline {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid var(--border-accent);
+    padding: 14px 32px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-outline:hover {
+    border-color: var(--text-muted);
+    color: var(--accent);
+  }
+
+  /* HERO RIGHT - TERMINAL */
+  .hero-terminal {
+    background: var(--surface);
+    border: 1px solid var(--border-accent);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
+  }
+
+  .terminal-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .terminal-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  .terminal-dot.red { background: #ff5f57; }
+  .terminal-dot.yellow { background: #febc2e; }
+  .terminal-dot.green { background: #28c840; }
+
+  .terminal-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-left: 8px;
+  }
+
+  .terminal-body {
+    padding: 24px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.9;
+  }
+
+  .t-comment { color: var(--text-dim); }
+  .t-key { color: var(--accent2); }
+  .t-string { color: var(--accent); }
+  .t-number { color: #ff9e64; }
+  .t-bracket { color: var(--text-muted); }
+  .t-cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  /* STATS */
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 48px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-item { text-align: center; }
+
+  .stat-number {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* SECTION WRAPPER */
+  .section-wrap {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 100px 48px;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 64px;
+  }
+
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 8px;
+  }
+
+  /* EXPERIENCE */
+  #experience { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  .experience-grid {
+    display: grid;
+    gap: 0;
+  }
+
+  .exp-item {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 48px;
+    padding: 48px 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    transition: background 0.3s;
+  }
+
+  .exp-item:last-child { border-bottom: none; }
+
+  .exp-item::before {
+    content: '';
+    position: absolute;
+    left: -48px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.4s ease;
+  }
+
+  .exp-item:hover::before { transform: scaleY(1); }
+
+  .exp-meta {
+    padding-top: 4px;
+  }
+
+  .exp-period {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+
+  .exp-company {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 300;
+  }
+
+  .exp-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--accent2);
+    border: 1px solid var(--accent2);
+    padding: 2px 8px;
+    border-radius: 2px;
+    margin-top: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .exp-role {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+
+  .exp-desc {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.8;
+  }
+
+  .exp-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  /* SKILLS */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2px;
+  }
+
+  .skill-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 32px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .skill-block:hover {
+    border-color: var(--border-accent);
+  }
+
+  .skill-block::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at top left, var(--accent-glow) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+
+  .skill-block:hover::after { opacity: 1; }
+
+  .skill-icon {
+    font-size: 1.6rem;
+    margin-bottom: 16px;
+  }
+
+  .skill-category {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .skill-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+
+  .skill-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .skill-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  .skill-list li::before {
+    content: '▸';
+    color: var(--accent);
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  /* PROJECTS */
+  #projects { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 2px;
+  }
+
+  .project-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 36px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+  }
+
+  .project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+  }
+
+  .project-card:hover::before { transform: scaleX(1); }
+
+  .project-num {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+  }
+
+  .project-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 12px;
+    line-height: 1.2;
+  }
+
+  .project-desc {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    flex: 1;
+    margin-bottom: 24px;
+  }
+
+  .project-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .project-link {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: gap 0.2s;
+  }
+
+  .project-link:hover { gap: 12px; }
+
+  /* CERTIFICATIONS */
+  .certs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .cert-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 24px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    transition: border-color 0.3s;
+  }
+
+  .cert-card:hover { border-color: var(--border-accent); }
+
+  .cert-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-glow);
+    border: 1px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+  }
+
+  .cert-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .cert-issuer {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* EDUCATION */
+  .education-block {
+    background: var(--surface);
+    border: 1px solid var(--border-accent);
+    padding: 48px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .education-block::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .edu-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .edu-course {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 12px;
+  }
+
+  .edu-uni {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .edu-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .edu-stat {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+  }
+
+  .edu-stat-value {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--accent);
+    min-width: 60px;
+  }
+
+  .edu-stat-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  /* CONTACT */
+  #contact {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .contact-heading {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin-bottom: 24px;
+  }
+
+  .contact-heading span { color: var(--accent); }
+
+  .contact-sub {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+    max-width: 440px;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 40px;
+  }
+
+  .contact-link {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: border-color 0.3s, transform 0.2s;
+    group: true;
+  }
+
+  .contact-link:hover {
+    border-color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  .contact-link-icon {
+    font-size: 1.1rem;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .contact-link-content {}
+
+  .contact-link-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .contact-link-value {
+    font-size: 0.95rem;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .contact-link:hover .contact-link-value { color: var(--accent); }
+
+  .contact-link-arrow {
+    margin-left: auto;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    transition: color 0.3s, transform 0.3s;
+  }
+
+  .contact-link:hover .contact-link-arrow {
+    color: var(--accent);
+    transform: translateX(4px);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px 48px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-name {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: -0.01em;
+  }
+
+  .footer-copy {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  /* SCROLL ANIMATIONS */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .reveal-delay-1 { transition-delay: 0.1s; }
+  .reveal-delay-2 { transition-delay: 0.2s; }
+  .reveal-delay-3 { transition-delay: 0.3s; }
+  .reveal-delay-4 { transition-delay: 0.4s; }
+
+  /* MOBILE */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .hamburger { display: flex; }
+
+    .nav-links.open {
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg);
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      z-index: 99;
+    }
+
+    .nav-links.open a {
+      font-size: 1.2rem;
+    }
+
+    #hero {
+      grid-template-columns: 1fr;
+      padding: 100px 24px 60px;
+      gap: 40px;
+    }
+
+    .hero-stats { gap: 24px; }
+
+    .section-wrap { padding: 64px 24px; }
+
+    .exp-item { grid-template-columns: 1fr; gap: 16px; }
+
+    .skills-grid { grid-template-columns: 1fr; }
+
+    .projects-grid { grid-template-columns: 1fr; }
+
+    .education-block { grid-template-columns: 1fr; gap: 32px; }
+
+    .contact-grid { grid-template-columns: 1fr; gap: 48px; }
+
+    .contact-heading { font-size: 2.5rem; }
+
+    footer { flex-direction: column; gap: 8px; text-align: center; }
+  }
+</style>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body>
 
-    <!-- Navegação -->
-    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-            <span class="font-bold text-blue-600 text-lg">JG.DEV</span>
-            <div class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
-                <a href="#inicio" class="hover:text-blue-600 transition">Início</a>
-                <a href="#perfil" class="hover:text-blue-600 transition">Perfil</a>
-                <a href="#experiencia" class="hover:text-blue-600 transition">Experiência</a>
-                <a href="#habilidades" class="hover:text-blue-600 transition">Competências</a>
-            </div>
-            <a href="mailto:joaogl.dev@gmail.com" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-                Contactar
-            </a>
+<!-- NAV -->
+<nav>
+  <a href="#hero" class="nav-logo">JG<span>.</span>dev</a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#experience">Experiência</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#projects">Projetos</a></li>
+    <li><a href="#certifications">Certificações</a></li>
+    <li><a href="#contact" class="nav-cta">Contato</a></li>
+  </ul>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Disponível para oportunidades</div>
+    <h1 class="hero-name">
+      <span class="line">João</span>
+      <span class="line">Gabriel</span>
+      <span class="line line-accent">Lima.</span>
+    </h1>
+    <p class="hero-bio">
+      <strong>Auxiliar de Informática & Desenvolvedor em formação.</strong> Infraestrutura de redes no dia a dia, Java Back-end no horizonte. ADS na Unieuro, com foco em construir coisas que funcionam de verdade.
+    </p>
+    <div class="hero-actions">
+      <a href="/cdn-cgi/l/email-protection#375d585658505b1953524177505a565e5b1954585a" class="btn-primary">Falar comigo →</a>
+      <a href="https://github.com/Lohan15" target="_blank" class="btn-outline">GitHub ↗</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="stat-number">3+</div>
+        <div class="stat-label">Anos de TI</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">4º</div>
+        <div class="stat-label">Semestre ADS</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-number">5</div>
+        <div class="stat-label">Certificações</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-terminal reveal">
+    <div class="terminal-header">
+      <div class="terminal-dot red"></div>
+      <div class="terminal-dot yellow"></div>
+      <div class="terminal-dot green"></div>
+      <span class="terminal-title">joao-gabriel.json</span>
+    </div>
+    <div class="terminal-body">
+      <div class="t-bracket">{</div>
+      <div style="padding-left:20px">
+        <span class="t-key">"nome"</span><span>: </span><span class="t-string">"João Gabriel Lima"</span><span>,</span><br>
+        <span class="t-key">"localização"</span><span>: </span><span class="t-string">"Ceilândia Sul, DF"</span><span>,</span><br>
+        <span class="t-key">"cargo_atual"</span><span>: </span><span class="t-string">"Auxiliar de Informática"</span><span>,</span><br>
+        <span class="t-key">"empresa"</span><span>: </span><span class="t-string">"PauloOctavio Investimentos"</span><span>,</span><br>
+        <span class="t-key">"foco"</span><span>: </span><span class="t-bracket">[</span><br>
+        <span style="padding-left:20px"><span class="t-string">"Infraestrutura & Redes"</span><span>,</span></span><br>
+        <span style="padding-left:20px"><span class="t-string">"Java Back-end"</span><span>,</span></span><br>
+        <span style="padding-left:20px"><span class="t-string">"Power BI"</span></span><br>
+        <span class="t-bracket">]</span><span>,</span><br>
+        <span class="t-key">"disponível"</span><span>: </span><span class="t-number">true</span><br>
+      </div>
+      <div class="t-bracket">}</div>
+      <div style="margin-top:16px; color: var(--text-dim)"><span class="t-comment">// pronto para o próximo desafio</span> <span class="t-cursor"></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPERIENCE -->
+<section id="experience">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Trajetória</div>
+        <h2 class="section-title">Experiência</h2>
+      </div>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="experience-grid">
+      <div class="exp-item reveal">
+        <div class="exp-meta">
+          <div class="exp-period">2025 — Atual</div>
+          <div class="exp-company">PauloOctavio Investimentos</div>
+          <div class="exp-badge">Atual</div>
         </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section id="inicio" class="pt-20 pb-16 px-4">
-        <div class="max-w-4xl mx-auto text-center fade-in">
-            <div class="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold uppercase mb-4 tracking-wider">Disponível para Oportunidades</div>
-            <h1 class="text-4xl md:text-6xl font-extrabold text-slate-900 mb-6 leading-tight">
-                João Gabriel Lucas <br><span class="text-blue-600">Pinheiro de Lima</span>
-            </h1>
-            <p class="text-lg text-slate-600 mb-8 max-w-2xl mx-auto">
-                Especialista em Suporte de TI e Infraestrutura de Redes em transição para Desenvolvimento de Sistemas Java.
-            </p>
-            <div class="flex flex-wrap justify-center gap-4">
-                <a href="https://github.com/Lohan15" target="_blank" class="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition">
-                    <i class="fab fa-github"></i> GitHub
-                </a>
-                <div class="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl">
-                    <i class="fas fa-map-marker-alt text-blue-500"></i> Ceilândia Sul, DF
-                </div>
-            </div>
+        <div class="exp-content">
+          <h3 class="exp-role">Auxiliar de Informática</h3>
+          <p class="exp-desc">Suporte técnico a usuários internos, gestão de infraestrutura de redes e configuração de switches e access points. Responsável por diagnósticos de hardware e software, garantindo a disponibilidade dos sistemas críticos da corretora.</p>
+          <div class="exp-tags">
+            <span class="tag">Redes TCP/IP</span>
+            <span class="tag">Switch / AP</span>
+            <span class="tag">Troubleshooting</span>
+            <span class="tag">Suporte Técnico</span>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <!-- Dashboard Section -->
-    <section id="perfil" class="py-16 bg-white border-y border-slate-200">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="flex flex-col md:flex-row gap-12 items-center">
-                <div class="flex-1">
-                    <h2 class="text-3xl font-bold mb-6">Resumo Analítico</h2>
-                    <p class="text-slate-600 leading-relaxed mb-6">
-                        Com trajetória iniciada em 2021, consolidei uma base sólida em suporte técnico e administração de ativos de rede. Como graduando em ADS (4º Semestre), foco em transformar este conhecimento técnico em soluções escaláveis através da programação.
-                    </p>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="block text-2xl font-bold text-blue-600">4º</span>
-                            <span class="text-xs text-slate-500 font-bold uppercase">Semestre ADS</span>
-                        </div>
-                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="block text-2xl font-bold text-blue-600">4+</span>
-                            <span class="text-xs text-slate-500 font-bold uppercase">Anos de Experiência</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex-1 w-full">
-                    <div class="chart-container glass-card p-6 rounded-2xl shadow-xl border border-slate-100">
-                        <canvas id="skillsRadar"></canvas>
-                    </div>
-                    <p class="text-center text-xs text-slate-400 mt-4">Visualização de Proficiência Técnica (%)</p>
-                </div>
-            </div>
+      <div class="exp-item reveal reveal-delay-1">
+        <div class="exp-meta">
+          <div class="exp-period">2023 — 2024</div>
+          <div class="exp-company">Bali Automóveis</div>
+          <div class="exp-badge">Aprendiz</div>
         </div>
-    </section>
-
-    <!-- Experience Timeline -->
-    <section id="experiencia" class="py-20 bg-slate-50">
-        <div class="max-w-4xl mx-auto px-4">
-            <h2 class="text-3xl font-bold text-center mb-12">Jornada Profissional</h2>
-            <div class="relative space-y-8" id="experience-list">
-                <!-- Injected via JavaScript -->
-            </div>
+        <div class="exp-content">
+          <h3 class="exp-role">Menor Aprendiz — TI</h3>
+          <p class="exp-desc">Atuação 100% voltada para TI: suporte técnico aos usuários internos, diagnóstico de máquinas, formatação e configuração de sistemas operacionais. Primeiro contato com rotina profissional de helpdesk.</p>
+          <div class="exp-tags">
+            <span class="tag">Helpdesk</span>
+            <span class="tag">Formatação</span>
+            <span class="tag">Diagnóstico HW</span>
+          </div>
         </div>
-    </section>
+      </div>
 
-    <!-- Skills Hub -->
-    <section id="habilidades" class="py-20 bg-white">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="text-center mb-12">
-                <h2 class="text-3xl font-bold mb-4">Hub de Competências</h2>
-                <div class="flex flex-wrap justify-center gap-2" id="filter-buttons">
-                    <button onclick="filterSkills('all')" class="px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow-md transition" data-category="all">Tudo</button>
-                    <button onclick="filterSkills('infra')" class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-category="infra">Infra & Redes</button>
-                    <button onclick="filterSkills('dev')" class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-category="dev">Desenvolvimento</button>
-                    <button onclick="filterSkills('cert')" class="px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition" data-category="cert">Cursos</button>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="skills-grid">
-                <!-- Injected via JavaScript -->
-            </div>
+      <div class="exp-item reveal reveal-delay-2">
+        <div class="exp-meta">
+          <div class="exp-period">2021 — 2022</div>
+          <div class="exp-company">PauloOctavio Investimentos</div>
+          <div class="exp-badge">Aprendiz</div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-slate-950 text-white py-12 px-4">
-        <div class="max-w-6xl mx-auto text-center">
-            <h2 class="text-2xl font-bold mb-4">João Gabriel L. P. Lima</h2>
-            <p class="text-slate-500 text-sm mb-8">Construindo soluções entre a infraestrutura e o código.</p>
-            <div class="flex justify-center gap-6 mb-8">
-                <a href="mailto:joaogl.dev@gmail.com" class="text-slate-400 hover:text-white transition text-xl"><i class="fas fa-envelope"></i></a>
-                <a href="https://github.com/Lohan15" target="_blank" class="text-slate-400 hover:text-white transition text-xl"><i class="fab fa-github"></i></a>
-                <a href="#" class="text-slate-400 hover:text-white transition text-xl"><i class="fab fa-linkedin"></i></a>
-            </div>
-            <div class="text-slate-700 text-xs border-t border-slate-900 pt-8">
-                &copy; 2026. Feito para exibição de portfólio profissional.
-            </div>
+        <div class="exp-content">
+          <h3 class="exp-role">Menor Aprendiz — TI & RH</h3>
+          <p class="exp-desc">Suporte técnico aos usuários internos e auxílio nas demandas de TI. Também atuou no suporte tecnológico aos processos de Recursos Humanos, desenvolvendo visão integrada entre tecnologia e operações corporativas.</p>
+          <div class="exp-tags">
+            <span class="tag">Suporte TI</span>
+            <span class="tag">Processos de RH</span>
+            <span class="tag">Operações</span>
+          </div>
         </div>
-    </footer>
+      </div>
+    </div>
+  </div>
+</section>
 
-    <script>
-        // Dados do Currículo
-        const experiences = [
-            {
-                company: "PauloOctavio Investimentos",
-                role: "Auxiliar de Informática",
-                period: "2025 – Presente",
-                desc: "Suporte Nível 1 e 2, configuração de Switch e Access Points, gestão de hardware e software corporativo.",
-                icon: "fa-network-wired"
-            },
-            {
-                company: "Bali Automóveis",
-                role: "Menor Aprendiz (TI)",
-                period: "2023 – 2024",
-                desc: "Diagnóstico de hardware, suporte a usuários em concessionária e configuração de sistemas internos.",
-                icon: "fa-laptop"
-            },
-            {
-                company: "PauloOctavio Investimentos",
-                role: "Menor Aprendiz (TI e RH)",
-                period: "2021 – 2022",
-                desc: "Suporte tecnológico ao RH e auxílio nas demandas gerais de infraestrutura básica.",
-                icon: "fa-users-cog"
-            }
-        ];
+<!-- SKILLS -->
+<section id="skills">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Competências</div>
+        <h2 class="section-title">Stack</h2>
+      </div>
+      <div class="section-line"></div>
+    </div>
 
-        const skills = [
-            { name: "Manutenção de Hardware", cat: "infra", level: 90, icon: "fa-tools" },
-            { name: "Configuração de Switch/AP", cat: "infra", level: 85, icon: "fa-server" },
-            { name: "Redes (TCP/IP)", cat: "infra", level: 80, icon: "fa-network-wired" },
-            { name: "Java (POO)", cat: "dev", level: 65, icon: "fa-mug-hot" },
-            { name: "Git / GitHub", cat: "dev", level: 70, icon: "fa-code-branch" },
-            { name: "Power BI", cat: "dev", level: 60, icon: "fa-chart-pie" },
-            { name: "Java POO (Coursera)", cat: "cert", level: 100, icon: "fa-certificate" },
-            { name: "IA para Devs (Alura)", cat: "cert", level: 100, icon: "fa-brain" },
-            { name: "Prog. Escalável (Unieuro)", cat: "cert", level: 100, icon: "fa-layer-group" }
-        ];
+    <div class="skills-grid">
+      <div class="skill-block reveal">
+        <div class="skill-icon">🔧</div>
+        <div class="skill-category">Infraestrutura</div>
+        <h3 class="skill-title">Hardware & Redes</h3>
+        <ul class="skill-list">
+          <li>Manutenção de Hardware</li>
+          <li>Redes TCP/IP</li>
+          <li>Configuração de Switches & Access Points</li>
+          <li>Troubleshooting de Sistemas</li>
+          <li>Suporte Técnico N1/N2</li>
+        </ul>
+      </div>
 
-        // Inicialização
-        window.onload = function() {
-            renderExperiences();
-            renderSkills('all');
-            initChart();
-        };
+      <div class="skill-block reveal reveal-delay-1">
+        <div class="skill-icon">☕</div>
+        <div class="skill-category">Desenvolvimento</div>
+        <h3 class="skill-title">Programação</h3>
+        <ul class="skill-list">
+          <li>Java — Programação Orientada a Objetos</li>
+          <li>Lógica de Programação</li>
+          <li>Git & GitHub</li>
+          <li>No-Code / Low-Code</li>
+          <li>Inglês Técnico (leitura de docs)</li>
+        </ul>
+      </div>
 
-        // Renderizar Experiências
-        function renderExperiences() {
-            const container = document.getElementById('experience-list');
-            container.innerHTML = experiences.map(exp => `
-                <div class="timeline-item relative pl-16 py-4 fade-in">
-                    <div class="absolute left-4 top-6 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white z-10 shadow-lg">
-                        <i class="fas ${exp.icon}"></i>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-                        <span class="text-blue-600 text-xs font-bold uppercase">${exp.period}</span>
-                        <h3 class="text-xl font-bold text-slate-900">${exp.role}</h3>
-                        <p class="text-slate-500 font-medium mb-2">${exp.company}</p>
-                        <p class="text-slate-600 text-sm">${exp.desc}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
+      <div class="skill-block reveal reveal-delay-2">
+        <div class="skill-icon">📊</div>
+        <div class="skill-category">Dados</div>
+        <h3 class="skill-title">Análise & BI</h3>
+        <ul class="skill-list">
+          <li>Power BI — dashboards e relatórios</li>
+          <li>Análise de dados para prevenção de fraudes</li>
+          <li>Visualização de KPIs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
 
-        // Renderizar Competências com Filtro
-        function renderSkills(category) {
-            const container = document.getElementById('skills-grid');
-            const filtered = category === 'all' ? skills : skills.filter(s => s.cat === category);
-            
-            container.innerHTML = filtered.map(s => `
-                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-200 hover:border-blue-400 transition-all group fade-in">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-blue-600 shadow-sm">
-                            <i class="fas ${s.icon}"></i>
-                        </div>
-                        <h4 class="font-bold text-slate-800">${s.name}</h4>
-                    </div>
-                    <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                        <div class="bg-blue-600 h-full transition-all duration-1000" style="width: ${s.level}%"></div>
-                    </div>
-                </div>
-            `).join('');
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Portfólio</div>
+        <h2 class="section-title">Projetos</h2>
+      </div>
+      <div class="section-line"></div>
+    </div>
 
-            // Atualizar botões de filtro
-            document.querySelectorAll('#filter-buttons button').forEach(btn => {
-                if(btn.dataset.category === category) {
-                    btn.className = "px-4 py-2 rounded-full text-sm font-medium bg-blue-600 text-white shadow-md transition";
-                } else {
-                    btn.className = "px-4 py-2 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition";
-                }
-            });
-        }
+    <div class="projects-grid">
+      <div class="project-card reveal">
+        <div class="project-num">01 — Java / Desktop</div>
+        <h3 class="project-title">Formulário de Cadastro de Clientes</h3>
+        <p class="project-desc">Aplicação desktop em Java Swing com interface gráfica completa para cadastro de clientes. Inclui validação de todos os campos em tempo real, campos formatados (telefone, estado) e feedback de erro via JOptionPane. Projeto com foco em boas práticas de UI com Java.</p>
+        <div class="project-stack">
+          <span class="tag">Java</span>
+          <span class="tag">Swing</span>
+          <span class="tag">JDK 8+</span>
+          <span class="tag">Validação de Formulários</span>
+        </div>
+        <a href="https://github.com/Lohan15/CadastrodeClientes" target="_blank" class="project-link">Ver no GitHub →</a>
+      </div>
 
-        function filterSkills(category) {
-            renderSkills(category);
-        }
+      <div class="project-card reveal reveal-delay-1">
+        <div class="project-num">02 — C / Algoritmos</div>
+        <h3 class="project-title">Sistema de Estoque com Roteirização</h3>
+        <p class="project-desc">Sistema de gerenciamento de estoque em C puro com CRUD completo, persistência em arquivo e o grande diferencial: roteirização inteligente de coleta usando Algoritmo de Dijkstra. O depósito é modelado como um grafo, e o sistema guia o operador pela rota mais curta. Implementa Pilhas (bloqueio/estorno) e Filas (pedidos FIFO).</p>
+        <div class="project-stack">
+          <span class="tag">C</span>
+          <span class="tag">Grafos</span>
+          <span class="tag">Dijkstra</span>
+          <span class="tag">Pilhas & Filas</span>
+          <span class="tag">Alocação Dinâmica</span>
+        </div>
+        <a href="https://github.com/Lohan15/Seminario-grafos" target="_blank" class="project-link">Ver no GitHub →</a>
+      </div>
 
-        // Gráfico Radar de Competências
-        function initChart() {
-            const ctx = document.getElementById('skillsRadar').getContext('2d');
-            new Chart(ctx, {
-                type: 'radar',
-                data: {
-                    labels: ['Infraestrutura', 'Redes', 'Suporte', 'Hardware', 'Java (POO)', 'Dados/BI'],
-                    datasets: [{
-                        label: 'Experiência Real',
-                        data: [90, 85, 95, 90, 60, 55],
-                        backgroundColor: 'rgba(37, 99, 235, 0.2)',
-                        borderColor: 'rgb(37, 99, 235)',
-                        borderWidth: 2,
-                        pointBackgroundColor: 'rgb(37, 99, 235)'
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            beginAtZero: true,
-                            max: 100,
-                            ticks: { display: false },
-                            grid: { color: '#e2e8f0' },
-                            angleLines: { color: '#e2e8f0' },
-                            pointLabels: { font: { size: 11, weight: '600' } }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+      <div class="project-card reveal reveal-delay-2">
+        <div class="project-num">03 — IA / Python</div>
+        <h3 class="project-title">Chatbot Emocional + Spotify</h3>
+        <p class="project-desc">Chatbot que analisa emoções nas mensagens do usuário e recomenda músicas no Spotify que combinam com o estado emocional detectado. Integra Google Gemini para compreensão de linguagem natural e a API do Spotify via Spotipy para recomendação personalizada. Roda direto no Google Colab, sem instalação.</p>
+        <div class="project-stack">
+          <span class="tag">Python</span>
+          <span class="tag">Google Gemini</span>
+          <span class="tag">Spotify API</span>
+          <span class="tag">IA Generativa</span>
+          <span class="tag">Google Colab</span>
+        </div>
+        <a href="https://github.com/Lohan15/Imers-o-IA" target="_blank" class="project-link">Ver no GitHub →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CERTIFICATIONS -->
+<section id="certifications">
+  <div class="section-wrap">
+    <div class="section-header">
+      <div>
+        <div class="section-tag">Formação Contínua</div>
+        <h2 class="section-title">Certificações</h2>
+      </div>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="certs-grid">
+      <div class="cert-card reveal">
+        <div class="cert-icon">☕</div>
+        <div style="flex:1">
+          <div class="cert-name">Programação Orientada a Objetos com Java</div>
+          <div class="cert-issuer">Coursera</div>
+        </div>
+      </div>
+      <div class="cert-card reveal reveal-delay-1" style="cursor:pointer" onclick="window.open('Imesao_ia.pdf','_blank')">
+        <div class="cert-icon">🤖</div>
+        <div style="flex:1">
+          <div class="cert-name">Imersão IA 3ª Edição</div>
+          <div class="cert-issuer">Alura + Google Gemini · Jun 2025</div>
+        </div>
+        <div style="color:var(--accent);font-size:0.75rem;margin-left:auto;align-self:center;flex-shrink:0">↗</div>
+      </div>
+      <div class="cert-card reveal reveal-delay-2" style="cursor:pointer" onclick="window.open('Programacao_escalavel.pdf','_blank')">
+        <div class="cert-icon">⚡</div>
+        <div style="flex:1">
+          <div class="cert-name">Programação Escalável na Prática</div>
+          <div class="cert-issuer">Unieuro · Jan 2025 · 4h</div>
+        </div>
+        <div style="color:var(--accent);font-size:0.75rem;margin-left:auto;align-self:center;flex-shrink:0">↗</div>
+      </div>
+      <div class="cert-card reveal reveal-delay-3" style="cursor:pointer" onclick="window.open('BI.pdf','_blank')">
+        <div class="cert-icon">📊</div>
+        <div style="flex:1">
+          <div class="cert-name">Análise de Dados para Prevenção de Fraudes</div>
+          <div class="cert-issuer">Unieuro · Power BI · Jan 2025 · 4h</div>
+        </div>
+        <div style="color:var(--accent);font-size:0.75rem;margin-left:auto;align-self:center;flex-shrink:0">↗</div>
+      </div>
+      <div class="cert-card reveal reveal-delay-4" style="cursor:pointer" onclick="window.open('No-code.pdf','_blank')">
+        <div class="cert-icon">📱</div>
+        <div style="flex:1">
+          <div class="cert-name">Desenvolvimento de Apps com No-Code</div>
+          <div class="cert-issuer">Unieuro · Jan 2025 · 4h</div>
+        </div>
+        <div style="color:var(--accent);font-size:0.75rem;margin-left:auto;align-self:center;flex-shrink:0">↗</div>
+      </div>
+    </div>
+
+    <!-- EDUCATION -->
+    <div style="margin-top: 64px;">
+      <div class="section-header">
+        <div>
+          <div class="section-tag">Graduação</div>
+          <h2 class="section-title">Formação</h2>
+        </div>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="education-block reveal">
+        <div>
+          <div class="edu-label">Em andamento</div>
+          <div class="edu-course">Análise e Desenvolvimento de Sistemas</div>
+          <div class="edu-uni">Unieuro — Unidade Águas Claras, DF</div>
+        </div>
+        <div class="edu-meta">
+          <div class="edu-stat">
+            <div class="edu-stat-value">4º</div>
+            <div class="edu-stat-label">Semestre atual</div>
+          </div>
+          <div class="edu-stat">
+            <div class="edu-stat-value">2026</div>
+            <div class="edu-stat-label">Previsão de conclusão</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="section-wrap">
+    <div class="contact-grid">
+      <div>
+        <h2 class="contact-heading">Vamos<br><span>trabalhar</span><br>juntos.</h2>
+        <p class="contact-sub">Aberto a oportunidades em suporte técnico, infraestrutura e desenvolvimento. Se tiver um projeto ou vaga interessante, manda mensagem.</p>
+      </div>
+      <div>
+        <div class="contact-links">
+          <a href="/cdn-cgi/l/email-protection#2a40454b454d46044e4f5c6a4d474b434604494547" class="contact-link">
+            <div class="contact-link-icon">✉</div>
+            <div class="contact-link-content">
+              <div class="contact-link-label">Email</div>
+              <div class="contact-link-value"><span class="__cf_email__" data-cfemail="2e44414f414942004a4b586e49434f4742004d4143">[email&#160;protected]</span></div>
+            </div>
+            <div class="contact-link-arrow">→</div>
+          </a>
+          <a href="tel:+5561995910518" class="contact-link">
+            <div class="contact-link-icon">📱</div>
+            <div class="contact-link-content">
+              <div class="contact-link-label">Telefone</div>
+              <div class="contact-link-value">(61) 99591-0518</div>
+            </div>
+            <div class="contact-link-arrow">→</div>
+          </a>
+          <a href="https://github.com/Lohan15" target="_blank" class="contact-link">
+            <div class="contact-link-icon">🐙</div>
+            <div class="contact-link-content">
+              <div class="contact-link-label">GitHub</div>
+              <div class="contact-link-value">github.com/Lohan15</div>
+            </div>
+            <div class="contact-link-arrow">↗</div>
+          </a>
+          <div class="contact-link" style="cursor:default">
+            <div class="contact-link-icon">📍</div>
+            <div class="contact-link-content">
+              <div class="contact-link-label">Localização</div>
+              <div class="contact-link-value">Ceilândia Sul, Brasília — DF</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-name">João Gabriel Lima</div>
+  <div class="footer-copy">© 2025 — Construído com dedicação</div>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // HAMBURGER
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('navLinks');
+
+  hamburger.addEventListener('click', () => {
+    navLinks.classList.toggle('open');
+  });
+
+  navLinks.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => navLinks.classList.remove('open'));
+  });
+
+  // SCROLL REVEAL
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // HERO ANIMATION ON LOAD
+  document.querySelector('.hero-left').style.opacity = '0';
+  document.querySelector('.hero-left').style.transform = 'translateY(20px)';
+  setTimeo
